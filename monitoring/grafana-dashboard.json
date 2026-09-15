@@ -1,0 +1,21 @@
+{
+  "title": "Sentiment Analysis Monitoring",
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "API Requests",
+      "targets": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Latency",
+      "targets": []
+    },
+    {
+      "type": "piechart",
+      "title": "Sentiment Distribution",
+      "targets": []
+    }
+  ],
+  "schemaVersion": 39
+}

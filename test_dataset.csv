@@ -1,0 +1,9 @@
+text,true_label,language
+التطبيق ممتاز وسريع وسهل الاستخدام,positive,ar
+الخدمة سيئة جدا والتطبيق بطيء ولا يعمل,negative,ar
+تم تحديث التطبيق إلى الإصدار الجديد اليوم,neutral,ar
+التطبيق جيد لكن الدعم الفني سيء,negative,ar
+The application is very fast and easy to use,positive,en
+The service is bad and the app is very slow,negative,en
+The system was updated today,neutral,en
+The price is acceptable but the support is bad,negative,en

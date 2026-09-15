@@ -1,0 +1,61 @@
+# ===== Backend =====
+backend/.venv/
+backend/venv/
+backend/env/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/*.py[cod]
+backend/*.db
+backend/*.sqlite
+backend/*.sqlite3
+backend/vector_index.json
+backend/.pytest_cache/
+backend/.coverage
+backend/htmlcov/
+
+# ===== Frontend =====
+frontend/node_modules/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+
+# ===== data_pipeline (exclude large datasets) =====
+data_pipeline/processed/
+data_pipeline/raw/
+
+# ===== training (exclude large model artifacts) =====
+training/saved_models/
+training/outputs/
+
+# ===== Python (all folders) =====
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.venv/
+venv/
+env/
+
+# ===== Environment variables =====
+.env
+.env.*
+!.env.example
+
+# ===== Logs =====
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+
+# ===== IDE / OS =====
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
