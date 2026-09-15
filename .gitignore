@@ -22,6 +22,7 @@ frontend/*.local
 # ===== data_pipeline (exclude large datasets) =====
 data_pipeline/processed/
 data_pipeline/raw/
+data_pipeline/vector_store/
 
 # ===== training (exclude large model artifacts) =====
 training/saved_models/
