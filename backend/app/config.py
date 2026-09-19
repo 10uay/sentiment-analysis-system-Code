@@ -18,6 +18,8 @@ class Settings(BaseSettings):
 
     # Hugging Face models
     enable_hf_models: bool = True
+    enable_arabert_hf: bool = False
+    enable_xlmr_hf: bool = True
     arabert_model_name: str = "aubmindlab/bert-base-arabertv02"
     xlmr_model_name: str = "xlm-roberta-base"
 

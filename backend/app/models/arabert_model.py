@@ -13,7 +13,7 @@ class AraBERTSentimentModel(BaseSentimentModel):
 
     def __init__(self):
         self.pipeline = None
-        if settings.enable_hf_models:
+        if settings.enable_arabert_hf:
             self._try_load_pipeline()
 
     def _try_load_pipeline(self):
