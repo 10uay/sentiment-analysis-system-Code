@@ -119,7 +119,7 @@ class XLMRobertaSentimentModel(BaseSentimentModel):
     def _predict_hf(self, text: str) -> SentimentPrediction:
         output = self.pipeline(text)
 
-        # With top_k=None, Hugging Face usually returns:
+        # With top_k=None, Pipeline usually returns:
         # [[{"label": "...", "score": ...}, ...]]
         # This makes the code robust in case the output shape changes.
         if isinstance(output, list) and len(output) > 0 and isinstance(output[0], list):
