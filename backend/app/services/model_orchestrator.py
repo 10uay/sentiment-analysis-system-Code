@@ -39,6 +39,7 @@ class ModelOrchestrator:
 
         return [self._to_schema(p) for p in preds]
 
+    # Select the final {label, confidence}: prefer ensemble, else highest score
     def aggregate(self, results: list[ModelResult]) -> dict:
         if not results:
             return {"label": "neutral", "confidence": 0.0}
@@ -48,6 +49,7 @@ class ModelOrchestrator:
         confidence = self._confidence_adjustment(selected)
         return {"label": selected.label, "confidence": confidence}
 
+    # confidence = 0.75 × score + 0.25 × margin ; score is top probability and margin is difference between top 2 probabilities
     def _confidence_adjustment(self, result: ModelResult) -> float:
         probs = sorted(result.probabilities.values(), reverse=True)
         margin = probs[0] - probs[1] if len(probs) > 1 else probs[0]
