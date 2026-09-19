@@ -44,7 +44,6 @@ class XLMRobertaSentimentModel(BaseSentimentModel):
     def _try_load_pipeline(self):
         try:
             from transformers import pipeline
-
             self.pipeline = pipeline(
                 "text-classification",
                 model=settings.xlmr_model_name,

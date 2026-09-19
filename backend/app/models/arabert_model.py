@@ -39,6 +39,7 @@ class AraBERTSentimentModel(BaseSentimentModel):
             probs = {"positive": 0.25, "negative": 0.20, "neutral": 0.55}
 
         label = max(probs, key=probs.get)
+
         return SentimentPrediction(
             model_name=self.name,
             label=label,
@@ -48,7 +49,13 @@ class AraBERTSentimentModel(BaseSentimentModel):
         )
 
     def _predict_hf(self, text: str) -> SentimentPrediction:
+        # result from the model
         raw = self.pipeline(text)[0]
+        # raw = [
+        #   {"label": "POS", "score": 0.92},
+        #   {"label": "NEG", "score": 0.06},
+        #   {"label": "NEUTRAL", "score": 0.02}
+        # ]
         probs = {}
         for item in raw:
             label = item["label"].lower()
@@ -64,6 +71,7 @@ class AraBERTSentimentModel(BaseSentimentModel):
             probs.setdefault(label, 0.0)
 
         best = max(probs, key=probs.get)
+
         return SentimentPrediction(
             model_name=self.name,
             label=best,
