@@ -1,5 +1,11 @@
 from app.config import get_settings
 from app.models.base_model import BaseSentimentModel, SentimentPrediction
+from app.models.lexicons import (
+    NEGATIVE_WORDS_AR,
+    NEGATIVE_WORDS_EN,
+    POSITIVE_WORDS_AR,
+    POSITIVE_WORDS_EN,
+)
 
 settings = get_settings()
 
@@ -7,17 +13,8 @@ settings = get_settings()
 class XLMRobertaSentimentModel(BaseSentimentModel):
     name = "xlmr"
 
-    positive_words = {
-        "excellent", "great", "good", "happy", "love", "like", "amazing",
-        "useful", "positive", "best", "thanks", "nice", "perfect",
-        "ممتاز", "رائع", "جيد", "احب", "جميل", "مفيد"
-    }
-
-    negative_words = {
-        "bad", "terrible", "sad", "hate", "problem", "fail", "weak",
-        "negative", "worst", "slow", "expensive", "poor",
-        "سيء", "مشكله", "فشل", "ضعيف", "سلبي", "بطيء"
-    }
+    positive_words = POSITIVE_WORDS_EN | POSITIVE_WORDS_AR
+    negative_words = NEGATIVE_WORDS_EN | NEGATIVE_WORDS_AR
 
     # Mapping from Hugging Face labels to our 5-class labels.
     # Our trained model was trained with:

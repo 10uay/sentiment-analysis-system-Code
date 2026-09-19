@@ -1,5 +1,6 @@
 from app.config import get_settings
 from app.models.base_model import BaseSentimentModel, SentimentPrediction
+from app.models.lexicons import NEGATIVE_WORDS_AR, POSITIVE_WORDS_AR
 
 settings = get_settings()
 
@@ -7,14 +8,8 @@ settings = get_settings()
 class AraBERTSentimentModel(BaseSentimentModel):
     name = "arabert"
 
-    positive_words = {
-        "ممتاز", "رائع", "جيد", "جميل", "سعيد", "احب", "اعجبني", "نجاح",
-        "قوي", "مفيد", "ايجابي", "مبهر", "شكرا", "افضل", "مناسب"
-    }
-    negative_words = {
-        "سيء", "سيئ", "رديء", "حزين", "اكره", "مشكله", "مشكلة", "فشل",
-        "ضعيف", "سلبي", "غالي", "بطيء", "مزعج", "اسوا", "كارثي"
-    }
+    positive_words = POSITIVE_WORDS_AR
+    negative_words = NEGATIVE_WORDS_AR
 
     def __init__(self):
         self.pipeline = None
