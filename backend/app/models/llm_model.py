@@ -8,8 +8,8 @@ class LLMSentimentModel(BaseSentimentModel):
     name = "llm"
 
     def predict(self, text: str, language: str = "unknown", context: list[str] | None = None) -> SentimentPrediction:
-        # النسخة التعليمية لا ترسل النص إلى مزود خارجي افتراضياً.
-        # يمكن لاحقاً ربط OpenAI/Claude هنا عند تفعيل ENABLE_LLM وتوفير المفاتيح.
+        # The educational version does not send text to an external provider by default.
+        # OpenAI/Claude can be wired here later when ENABLE_LLM is set and API keys are provided.
         context_text = "\n".join(context or [])
         explanation = (
             "LLM fallback explanation: the model checks polarity words, tone, and retrieved context. "
@@ -31,6 +31,7 @@ class LLMSentimentModel(BaseSentimentModel):
             probs = {"positive": 0.25, "negative": 0.20, "neutral": 0.55}
 
         label = max(probs, key=probs.get)
+        
         return SentimentPrediction(
             model_name=self.name,
             label=label,
