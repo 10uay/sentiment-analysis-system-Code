@@ -9,32 +9,38 @@ from app.models.lexicons import (
 
 settings = get_settings()
 
+# Hugging Face models return labels in different formats ("label_0", "LABEL_0", "Label_0"...).
+# We normalize everything to lowercase so we only need one entry per class.
+_LABEL_ID_TO_5CLASS = {
+    "label_0": "very_negative",
+    "label_1": "negative",
+    "label_2": "neutral",
+    "label_3": "positive",
+    "label_4": "very_positive",
+}
+
+# Order matters: index == class id.
+_5CLASS_LABELS = [
+    "very_negative", 
+    "negative", 
+    "neutral",
+    "positive",
+    "very_positive"
+]
+
+
+def _resolve_label(raw_label: str) -> str:
+    # Map a raw HF label (e.g. "LABEL_3") to one of our 5-class names.
+    # Falls back to the lowercased raw label if no mapping is found,
+    # so human-readable labels like "positive" pass through untouched.
+    return _LABEL_ID_TO_5CLASS.get(raw_label.lower(), raw_label.lower())
+
 
 class XLMRobertaSentimentModel(BaseSentimentModel):
     name = "xlmr"
 
     positive_words = POSITIVE_WORDS_EN | POSITIVE_WORDS_AR
     negative_words = NEGATIVE_WORDS_EN | NEGATIVE_WORDS_AR
-
-    # Mapping from Hugging Face labels to our 5-class labels.
-    # Our trained model was trained with:
-    # 0 = very_negative
-    # 1 = negative
-    # 2 = neutral
-    # 3 = positive
-    # 4 = very_positive
-    label_id_to_5class = {
-        "label_0": "very_negative",
-        "label_1": "negative",
-        "label_2": "neutral",
-        "label_3": "positive",
-        "label_4": "very_positive",
-        "LABEL_0": "very_negative",
-        "LABEL_1": "negative",
-        "LABEL_2": "neutral",
-        "LABEL_3": "positive",
-        "LABEL_4": "very_positive",
-    }
 
     def __init__(self):
         self.pipeline = None
@@ -44,18 +50,17 @@ class XLMRobertaSentimentModel(BaseSentimentModel):
     def _try_load_pipeline(self):
         try:
             from transformers import pipeline
+
             self.pipeline = pipeline(
                 "text-classification",
                 model=settings.xlmr_model_name,
                 tokenizer=settings.xlmr_model_name,
                 top_k=None,
             )
-
-            print("XLM-R model loaded successfully from:", settings.xlmr_model_name)
-
+            # print("XLM-R model loaded successfully from:", settings.xlmr_model_name)
         except Exception as exc:
-            print("Failed to load XLM-R model. Falling back to lexicon.")
-            print("Reason:", exc)
+            # print("Failed to load XLM-R model. Falling back to lexicon.")
+            # print("Reason:", exc)
             self.pipeline = None
 
     def predict(
@@ -64,50 +69,30 @@ class XLMRobertaSentimentModel(BaseSentimentModel):
         language: str = "unknown",
         context: list[str] | None = None,
     ) -> SentimentPrediction:
-
         if self.pipeline:
             return self._predict_hf(text)
-
         return self._predict_fallback(text)
 
+    # ------------------------------------------------------------------
+    # Fallback: simple lexicon-based prediction (no HF model available)
+    # ------------------------------------------------------------------
     def _predict_fallback(self, text: str) -> SentimentPrediction:
         tokens = set(text.lower().split())
         pos = len(tokens & self.positive_words)
         neg = len(tokens & self.negative_words)
 
         if pos >= 2 and neg == 0:
-            probs = {
-                "positive": 0.85,
-                "neutral": 0.10,
-                "negative": 0.05,
-            }
+            probs = {"positive": 0.85, "neutral": 0.10, "negative": 0.05}
         elif pos > neg:
-            probs = {
-                "positive": 0.70,
-                "neutral": 0.20,
-                "negative": 0.10,
-            }
+            probs = {"positive": 0.70, "neutral": 0.20, "negative": 0.10}
         elif neg >= 2 and pos == 0:
-            probs = {
-                "positive": 0.05,
-                "neutral": 0.10,
-                "negative": 0.85,
-            }
+            probs = {"positive": 0.05, "neutral": 0.10, "negative": 0.85}
         elif neg > pos:
-            probs = {
-                "positive": 0.10,
-                "neutral": 0.20,
-                "negative": 0.70,
-            }
+            probs = {"positive": 0.10, "neutral": 0.20, "negative": 0.70}
         else:
-            probs = {
-                "positive": 0.20,
-                "neutral": 0.60,
-                "negative": 0.20,
-            }
+            probs = {"positive": 0.20, "neutral": 0.60, "negative": 0.20}
 
         label = max(probs, key=probs.get)
-
         return SentimentPrediction(
             model_name=self.name,
             label=label,
@@ -116,89 +101,23 @@ class XLMRobertaSentimentModel(BaseSentimentModel):
             explanation="XLM-R fallback lexicon was used. Enable HF models for real multilingual inference.",
         )
 
+    # ------------------------------------------------------------------
+    # Real HF inference
+    # ------------------------------------------------------------------
     def _predict_hf(self, text: str) -> SentimentPrediction:
-        output = self.pipeline(text)
+        raw_predictions = self._extract_predictions(self.pipeline(text))
+        probs_5class = self._build_5class_probs(raw_predictions)
+        probs_3class = self._collapse_to_3class(probs_5class)
 
-        # With top_k=None, Pipeline usually returns:
-        # [[{"label": "...", "score": ...}, ...]]
-        # This makes the code robust in case the output shape changes.
-        if isinstance(output, list) and len(output) > 0 and isinstance(output[0], list):
-            raw_predictions = output[0]
-        else:
-            raw_predictions = output
-
-        probs_5class = {
-            "very_negative": 0.0,
-            "negative": 0.0,
-            "neutral": 0.0,
-            "positive": 0.0,
-            "very_positive": 0.0,
-        }
-
-        for item in raw_predictions:
-            raw_label = str(item["label"])
-            score = float(item["score"])
-
-            label_5class = self.label_id_to_5class.get(
-                raw_label,
-                self.label_id_to_5class.get(raw_label.lower(), raw_label.lower()),
-            )
-
-            if label_5class in probs_5class:
-                probs_5class[label_5class] = score
-
-        # 5-class best label
         best_5class = max(probs_5class, key=probs_5class.get)
-
-        # Convert 5-class probabilities to 3-class probabilities.
-        # Notice:
-        # negative = very_negative + negative
-        # positive = positive + very_positive
-        # neutral remains alone
-        probs_3class = {
-            "negative": probs_5class["very_negative"] + probs_5class["negative"],
-            "neutral": probs_5class["neutral"],
-            "positive": probs_5class["positive"] + probs_5class["very_positive"],
-        }
-
-        best_3class = max(probs_3class, key=probs_3class.get)
-
-        # ------------------------------------------------------------
-        # Neutral correction rule
-        # ------------------------------------------------------------
-        # If the strongest detailed 5-class label is neutral,
-        # keep the final 3-class decision neutral.
-        #
-        # Why?
-        # Because neutral has only one source probability,
-        # while negative and positive each combine two classes.
-        # Without this rule, neutral can be unfairly overwhelmed.
-        # ------------------------------------------------------------
-        decision_reason = "standard 5-to-3 probability aggregation"
-
-        if best_5class == "neutral":
-            best_3class = "neutral"
-            decision_reason = "neutral preserved because detailed 5-class label is neutral"
-
-        # ------------------------------------------------------------
-        # Additional uncertainty rule
-        # ------------------------------------------------------------
-        # If the model is not very confident and neutral is close enough
-        # to the winning class, prefer neutral.
-        # This helps with factual/informational sentences.
-        # ------------------------------------------------------------
-        top_score = probs_3class[best_3class]
-        neutral_score = probs_3class["neutral"]
-
-        if best_3class != "neutral":
-            if top_score < 0.60 and neutral_score >= 0.25 and (top_score - neutral_score) < 0.25:
-                best_3class = "neutral"
-                decision_reason = "neutral selected due to low confidence and close neutral score"
+        best_3class, reason = self._apply_neutral_rules(
+            probs_3class, best_5class
+        )
 
         explanation = (
             "Prediction generated by Hugging Face XLM-R pipeline. "
-            f"Detailed 5-class label: {best_5class}. "
-            f"Final 3-class decision rule: {decision_reason}."
+            f"Detailed 5-class label: {best_5class}."
+            f"Final 3-class decision rule: {reason}."
         )
 
         return SentimentPrediction(
@@ -208,3 +127,60 @@ class XLMRobertaSentimentModel(BaseSentimentModel):
             probabilities=probs_3class,
             explanation=explanation,
         )
+
+    @staticmethod
+    def _extract_predictions(output) -> list[dict]:
+        # Normalize HF pipeline output to a flat list of {label, score} dicts.
+        # With top_k=None the output is usually nested: [[{...}, {...}]].
+        # Some model/version combos return a flat list instead. Handle both.
+        if isinstance(output, list) and output and isinstance(output[0], list):
+            return output[0]
+        return output
+
+    @staticmethod
+    def _build_5class_probs(raw_predictions: list[dict]) -> dict[str, float]:
+        # Convert raw HF predictions into a full 5-class probability dict
+        probs = {label: 0.0 for label in _5CLASS_LABELS}
+
+        for item in raw_predictions:
+            label = _resolve_label(str(item["label"]))
+            if label in probs:
+                probs[label] = float(item["score"])
+
+        return probs
+
+    @staticmethod
+    def _collapse_to_3class(probs_5class: dict[str, float]) -> dict[str, float]:
+        # Merge 5 classes into 3: negative/neutral/positive.
+        # very_negative + negative -> negative
+        # neutral                   -> neutral
+        # positive + very_positive  -> positive
+        return {
+            "negative": probs_5class["very_negative"] + probs_5class["negative"],
+            "neutral": probs_5class["neutral"],
+            "positive": probs_5class["positive"] + probs_5class["very_positive"],
+        }
+
+    @staticmethod
+    def _apply_neutral_rules(
+        probs_3class: dict[str, float], best_5class: str
+    ) -> tuple[str, str]:
+        # Decide the final 3-class label, applying neutral-correction rules.
+        # Returns (label, reason).
+        best_3class = max(probs_3class, key=probs_3class.get)
+        reason = "standard 5-to-3 probability aggregation"
+
+        # Rule 1: if the detailed 5-class winner is neutral, keep it neutral.
+        # Neutral has a single source probability while neg/pos each combine
+        # two classes, so it can be unfairly overwhelmed during aggregation.
+        if best_5class == "neutral":
+            return "neutral", "neutral preserved because detailed 5-class label is neutral"
+
+        # Rule 2: if the model is unconfident and neutral is close to the
+        # winner, prefer neutral (good for factual/informational sentences).
+        top_score = probs_3class[best_3class]
+        neutral_score = probs_3class["neutral"]
+        if top_score < 0.60 and neutral_score >= 0.25 and (top_score - neutral_score) < 0.25:
+            return "neutral", "neutral selected due to low confidence and close neutral score"
+
+        return best_3class, reason
