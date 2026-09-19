@@ -14,6 +14,7 @@ settings = get_settings()
 _request_counter: dict[str, list[datetime]] = defaultdict(list)
 
 
+# Create one session for each user
 def get_db() -> Generator[Session, None, None]:
     db = SessionLocal()
     try:
@@ -22,12 +23,14 @@ def get_db() -> Generator[Session, None, None]:
         db.close()
 
 
+# Create accress token for one day
 def create_access_token(subject: str) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
     payload = {"sub": subject, "exp": expire}
     return jwt.encode(payload, settings.secret_key, algorithm="HS256")
 
 
+# Check user authorization by JWT
 def get_current_user(authorization: str | None = Header(default=None)) -> str:
     if not authorization:
         return "anonymous"
@@ -42,7 +45,7 @@ def get_current_user(authorization: str | None = Header(default=None)) -> str:
     except JWTError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from exc
 
-
+# Rate limitation (120 req/min) per IP
 def rate_limit(request: Request, limit: int = 120, window_seconds: int = 60):
     client = request.client.host if request.client else "unknown"
     now = datetime.now(timezone.utc)
