@@ -3,6 +3,7 @@ import { analyzeText, AnalyzeResponse } from "../services/api";
 import ResultCard from "../components/ResultCard";
 
 export default function CompareModels() {
+  const models = ["arabert", "xlmr", "ensemble", "llm"];
   const [text, setText] = useState(
     "The service is excellent but the price is expensive",
   );
@@ -11,7 +12,6 @@ export default function CompareModels() {
 
   async function compare() {
     setLoading(true);
-    const models = ["arabert", "xlmr", "ensemble", "llm"];
     const out: AnalyzeResponse[] = [];
     for (const m of models) {
       out.push(await analyzeText(text, m, true));
@@ -42,7 +42,7 @@ export default function CompareModels() {
       {results.length > 0 && (
         <div className="grid">
           {results.map((r, i) => (
-            <ResultCard key={i} result={r} />
+            <ResultCard key={i} result={r} modelName={models[i]} />
           ))}
         </div>
       )}

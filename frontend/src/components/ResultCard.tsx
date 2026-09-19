@@ -11,11 +11,30 @@ function labelArabic(label: string) {
   return map[label] || label;
 }
 
-export default function ResultCard({ result }: { result: AnalyzeResponse }) {
+export default function ResultCard({
+  result,
+  modelName,
+}: {
+  result: AnalyzeResponse;
+  modelName?: string;
+}) {
   const conf = Math.round(result.confidence * 100);
 
   return (
     <div className="card">
+      {modelName && (
+        <h2
+          className="model-title"
+          style={{
+            fontSize: "1.6rem",
+            fontWeight: 800,
+            textAlign: "center",
+            textTransform: "uppercase",
+          }}
+        >
+          {modelName}
+        </h2>
+      )}
       <div className="badge">اللغة: {result.language}</div>
       <p className={`result-label sent-${result.final_label}`}>
         {labelArabic(result.final_label)}
@@ -35,27 +54,29 @@ export default function ResultCard({ result }: { result: AnalyzeResponse }) {
 
       <h3>نتائج النماذج</h3>
       <div className="grid">
-        {result.model_results.map((m) => {
-          const score = Math.round(m.score * 100);
-          return (
-            <div className="model-card" key={m.model_name}>
-              <strong>{m.model_name}</strong>
-              <p
-                className={`sent-${m.label}`}
-                style={{ margin: "0 0 8px", fontWeight: 700 }}
-              >
-                {labelArabic(m.label)} — {score}%
-              </p>
-              <div className="confidence-track">
-                <div
-                  className="confidence-fill"
-                  style={{ width: `${score}%` }}
-                />
+        {result.model_results
+          .filter((m) => (modelName ? m.model_name === modelName : true))
+          .map((m) => {
+            const score = Math.round(m.score * 100);
+            return (
+              <div className="model-card" key={m.model_name}>
+                <strong>{m.model_name}</strong>
+                <p
+                  className={`sent-${m.label}`}
+                  style={{ margin: "0 0 8px", fontWeight: 700 }}
+                >
+                  {labelArabic(m.label)} — {score}%
+                </p>
+                <div className="confidence-track">
+                  <div
+                    className="confidence-fill"
+                    style={{ width: `${score}%` }}
+                  />
+                </div>
+                {m.explanation && <small>{m.explanation}</small>}
               </div>
-              {m.explanation && <small>{m.explanation}</small>}
-            </div>
-          );
-        })}
+            );
+          })}
       </div>
 
       {result.rag_context.length > 0 && (
