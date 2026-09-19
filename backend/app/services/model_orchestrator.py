@@ -10,8 +10,8 @@ class ModelOrchestrator:
     def __init__(self):
         self.arabert = AraBERTSentimentModel()
         self.xlmr = XLMRobertaSentimentModel()
-        self.llm = LLMSentimentModel()
         self.ensemble = EnsembleModel()
+        self.llm = LLMSentimentModel()
 
     def predict(
         self,
