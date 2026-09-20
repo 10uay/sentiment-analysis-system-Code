@@ -159,6 +159,7 @@ def batch_analyze(
         },
     )
 
+
 @router.websocket("/ws/analyze")
 async def analyze_websocket(websocket: WebSocket):
     await websocket.accept()

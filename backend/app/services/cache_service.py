@@ -1,7 +1,6 @@
 import hashlib
 import json
 from typing import Any
-
 from app.config import get_settings
 
 settings = get_settings()

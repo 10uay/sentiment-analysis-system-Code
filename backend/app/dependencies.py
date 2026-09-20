@@ -43,6 +43,7 @@ def get_current_user(authorization: str | None = Header(default=None)) -> str:
     except JWTError as exc:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token") from exc
 
+
 # Rate limitation (120 req/min) per IP
 def rate_limit(request: Request, limit: int = 120, window_seconds: int = 60):
     client = request.client.host if request.client else "unknown"

@@ -1,6 +1,5 @@
 import argparse
 from pathlib import Path
-
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, precision_recall_fscore_support
