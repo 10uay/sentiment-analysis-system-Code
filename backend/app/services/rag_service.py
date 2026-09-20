@@ -52,12 +52,9 @@ class RAGService:
         top_k: int = 3,
         target_label: str | None = None,
     ) -> list[str]:
-        """
-        Retrieve similar texts from the vector index.
-
-        If target_label is provided, the method prefers examples
-        that have the same sentiment class as the model prediction.
-        """
+        # Retrieve similar texts from the vector index.
+        # If target_label is provided, the method prefers examples
+        # that have the same sentiment class as the model prediction.
 
         if not settings.enable_rag:
             return []

@@ -2,7 +2,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import HTMLResponse
-
 from app.config import get_settings
 from app.db.database import Base, engine
 from app.db import models as db_models  # noqa: F401

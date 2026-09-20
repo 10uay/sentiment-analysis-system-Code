@@ -2,9 +2,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
-
 import numpy as np
-
 from app.config import get_settings
 
 settings = get_settings()
@@ -25,18 +23,26 @@ class EmbeddingService:
             self.model = None
 
     def embed(self, text: str) -> list[float]:
+        # Convert text to a numeric vector. Use the real model if available,
+        # otherwise fallback to hash-based embedding.
         if self.model:
+            # [text] for batch input; normalize for simpler cosine similarity.
             emb = self.model.encode([text], normalize_embeddings=True)[0]
             return emb.astype(float).tolist()
         return self._hash_embedding(text)
 
     def _hash_embedding(self, text: str) -> list[float]:
+        # Builds a deterministic vector from token hashes (no semantic meaning).
         vec = np.zeros(self.dim, dtype=float)
         for token in text.lower().split():
+            # Hash each token (word) with SHA256 to get a deterministic position and sign.
             digest = hashlib.sha256(token.encode("utf-8")).digest()
+            # Map the hash to a valid index in the vector.
             idx = int.from_bytes(digest[:4], "little") % self.dim
+            # Use a byte from the hash to decide +1 or -1.
             sign = 1 if digest[4] % 2 == 0 else -1
             vec[idx] += sign
+        # Normalize to unit length so cosine similarity still works.
         norm = np.linalg.norm(vec)
         if norm == 0:
             return vec.tolist()
@@ -44,9 +50,14 @@ class EmbeddingService:
 
     @staticmethod
     def cosine(a: list[float], b: list[float]) -> float:
+        # Compute cosine similarity between two embedding vectors.
+        # Measures the angle between vectors: 1.0 = identical, 0.0 = unrelated, -1.0 = opposite.
+        # dot = dot product (sum of element-wise products)
+        # na, nb = vector magnitudes (L2 norms)
         dot = sum(x * y for x, y in zip(a, b))
         na = math.sqrt(sum(x * x for x in a))
         nb = math.sqrt(sum(y * y for y in b))
+        # Guard against division by zero if either vector has zero magnitude.
         return float(dot / (na * nb)) if na and nb else 0.0
 
     def save_index(self, items: list[dict], path: str | None = None):
