@@ -9,10 +9,7 @@ class RAGService:
         self.embeddings = EmbeddingService()
 
     def _normalize_label_to_3class(self, label: str | None) -> str:
-        """
-        Convert any dataset/model label into 3-class label:
-        positive / negative / neutral
-        """
+        # Convert any dataset/model label into 3-class label: positive / negative / neutral
         if label is None:
             return "unknown"
 
@@ -29,15 +26,13 @@ class RAGService:
 
         return "unknown"
 
+    # Extract label from vector index item.
     def _get_item_label(self, item: dict) -> str:
-        """
-        Extract label from vector index item.
-        The index usually stores label inside item["metadata"]["label"].
-        """
         metadata = item.get("metadata", {})
 
         label = (
             metadata.get("label")
+            or metadata.get("true_label")
             or metadata.get("sentiment")
             or item.get("label")
             or item.get("sentiment")
@@ -45,6 +40,7 @@ class RAGService:
 
         return self._normalize_label_to_3class(label)
 
+    # Retrieve Function
     def retrieve(
         self,
         query: str,

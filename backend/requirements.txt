@@ -14,7 +14,10 @@ arabic-reshaper==3.0.1
 python-bidi==0.6.11
 pytest==8.3.4
 httpx==0.28.1
-transformers==5.17.0
+transformers==4.46.3
 torch==2.14.0
 safetensors==0.8.0
 sentencepiece==0.2.2
+numpy==2.2.0
+pandas==2.2.3
+sentence-transformers==3.3.1

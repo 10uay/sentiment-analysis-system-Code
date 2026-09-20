@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from app.db.models import Analysis
 
 
+# CREATE
 def create_analysis(
     db: Session,
     user_id: str,
@@ -31,13 +32,14 @@ def create_analysis(
     return item
 
 
+# GET
 def get_history(db: Session, user_id: str, limit: int = 50, offset: int = 0) -> list[Analysis]:
     query = db.query(Analysis)
     if user_id != "anonymous":
         query = query.filter(Analysis.user_id == user_id)
     return query.order_by(Analysis.created_at.desc()).offset(offset).limit(limit).all()
 
-
+# GET BY IDs
 def get_analyses_by_ids(db: Session, user_id: str, ids: Iterable[int]) -> list[Analysis]:
     query = db.query(Analysis)
     ids = list(ids)

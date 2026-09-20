@@ -173,6 +173,7 @@ class ReportService:
             f"Retrieved RAG contexts: {len(context)}."
         )
 
+    # Generate the Excel report
     def generate_csv(self, rows: list[Analysis]) -> str:
         output = io.StringIO()
         writer = csv.writer(output)

@@ -1,11 +1,9 @@
 from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Generator
-
 from fastapi import Depends, Header, HTTPException, Request, status
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
-
 from app.config import get_settings
 from app.db.database import SessionLocal
 

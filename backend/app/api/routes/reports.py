@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy.orm import Session
-
 from app.api.schemas import ReportRequest
 from app.dependencies import get_current_user, get_db
 from app.db import crud

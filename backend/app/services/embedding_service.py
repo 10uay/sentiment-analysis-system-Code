@@ -22,6 +22,7 @@ class EmbeddingService:
         except Exception:
             self.model = None
 
+    # Convert text to a numeric vector
     def embed(self, text: str) -> list[float]:
         # Convert text to a numeric vector. Use the real model if available,
         # otherwise fallback to hash-based embedding.
@@ -48,22 +49,23 @@ class EmbeddingService:
             return vec.tolist()
         return (vec / norm).tolist()
 
+    # Compute cosine similarity between two embedding vectors.
+    # Measures the angle between vectors: 1.0 = identical, 0.0 = unrelated, -1.0 = opposite.
     @staticmethod
     def cosine(a: list[float], b: list[float]) -> float:
-        # Compute cosine similarity between two embedding vectors.
-        # Measures the angle between vectors: 1.0 = identical, 0.0 = unrelated, -1.0 = opposite.
         # dot = dot product (sum of element-wise products)
-        # na, nb = vector magnitudes (L2 norms)
         dot = sum(x * y for x, y in zip(a, b))
         na = math.sqrt(sum(x * x for x in a))
         nb = math.sqrt(sum(y * y for y in b))
         # Guard against division by zero if either vector has zero magnitude.
         return float(dot / (na * nb)) if na and nb else 0.0
 
+    # create/update the vector_index. 
     def save_index(self, items: list[dict], path: str | None = None):
         path = path or settings.vector_index_path
         Path(path).write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
 
+    # load the vector_index file (it is List), otherwise return empty List
     def load_index(self, path: str | None = None) -> list[dict]:
         path = path or settings.vector_index_path
         p = Path(path)

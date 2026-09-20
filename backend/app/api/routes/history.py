@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-
 from app.api.schemas import HistoryItem
 from app.dependencies import get_current_user, get_db
 from app.db import crud

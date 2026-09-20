@@ -1,9 +1,7 @@
 from datetime import datetime, timezone
 import json
-
 from fastapi import APIRouter, Depends, Request, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
-
 from app.api.schemas import AnalyzeRequest, AnalyzeResponse, BatchAnalyzeRequest, BatchAnalyzeResponse
 from app.dependencies import get_current_user, get_db, rate_limit
 from app.db import crud
@@ -62,8 +60,7 @@ def run_analysis(payload: AnalyzeRequest, db: Session, user: str) -> AnalyzeResp
     )
 
     # 4) Keep the model result from the real model.
-    # RAG is used here mainly for explanation/report context,
-    # not for changing the trained model prediction.
+    # RAG is used here mainly for explanation/report context.
     model_results = initial_model_results
     final = initial_final
 
