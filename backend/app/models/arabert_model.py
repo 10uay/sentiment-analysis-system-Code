@@ -7,7 +7,6 @@ settings = get_settings()
 
 class AraBERTSentimentModel(BaseSentimentModel):
     name = "arabert"
-
     positive_words = POSITIVE_WORDS_AR
     negative_words = NEGATIVE_WORDS_AR
 
